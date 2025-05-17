@@ -1,0 +1,271 @@
+; Barber shop
+; A one-line, one-server queuing system
+; Adapted from Case Study 2A of Thomas J. Schriber's "A GPSS Primer" (page II-36)
+
+; Time unit: 1 minute
+
+; Customer
+        GENERATE    18,6        ; Customers arrive
+        QUEUE       Line        ; Enter the line
+        SEIZE       Barber      ; Capture the barber
+        DEPART      Line        ; Leave the line
+        ADVANCE     16,4        ; Use the barber
+        RELEASE     Barber      ; Free the barber
+        TERMINATE               ; Leave the shop
+
+; Timer
+        GENERATE    480         ; Timer arrives at time 480 (8 hours)
+        TERMINATE   1           ; Shut off the run
+
+; Control
+        START       1           ; Start the run
+        END                     ; Exit the program
+
+_________________________________________________________________________________________
+; Multi-Server, Single Queueing System
+; Multiple barbers (servers) and one queue
+; Time unit: 1 minute
+; Customer
+        GENERATE    18,6        ; Customers arrive every 18 +/- 6 minutes
+        QUEUE       Line        ; Enter the line (queue)
+        
+; The number of barbers (servers) is 3
+; The system will seize any available barber from the pool
+        SEIZE       Barber1     ; Capture the first barber (server)
+        SEIZE       Barber2     ; Capture the second barber (server)
+        SEIZE       Barber3     ; Capture the third barber (server)
+        
+        DEPART      Line        ; Leave the line after being served
+        ADVANCE     16,4        ; Use the barber (service time) 16 +/- 4 minutes
+        RELEASE     Barber1     ; Free the first barber (server)
+        RELEASE     Barber2     ; Free the second barber (server)
+        RELEASE     Barber3     ; Free the third barber (server)
+        TERMINATE               ; Leave the shop after service
+
+; Timer
+        GENERATE    480         ; Timer arrives after 480 minutes (8 hours)
+        TERMINATE   1           ; Shut off the run after 480 minutes
+
+; Control
+        START       1           ; Start the run
+        END
+_________________________________________________________________________________________
+; Multi-Server Inventory Management System
+; Multiple workers (servers) and one queue
+; Time unit: 1 minute
+
+; Customer (Inventory demand)
+        GENERATE    18,6            ; Customers arrive every 18 +/- 6 minutes
+        QUEUE       Line            ; Enter the line (queue)
+
+; The number of workers (servers) handling the inventory is 3
+; The system will seize any available worker from the pool
+        SEIZE       Worker1         ; Capture the first worker (server)
+        SEIZE       Worker2         ; Capture the second worker (server)
+        SEIZE       Worker3         ; Capture the third worker (server)
+
+        DEPART      Line            ; Leave the line after being served
+        ADVANCE     16,4            ; Use the worker (service time) 16 +/- 4 minutes
+        RELEASE     Worker1         ; Free the first worker (server)
+        RELEASE     Worker2         ; Free the second worker (server)
+        RELEASE     Worker3         ; Free the third worker (server)
+        TERMINATE                   ; Customer leaves after service
+
+; Restocking Process (Supply)
+        GENERATE    240             ; Restocking arrives every 240 minutes (4 hours)
+        SEIZE       Inventory       ; Seize inventory space
+        ADVANCE     0,0             ; Restocking time is immediate (no delay)
+        RELEASE     Inventory       ; Release restocked inventory
+        TERMINATE                   ; End restocking transaction
+
+; Timer (Stop simulation after 480 minutes)
+        GENERATE    480             ; Timer arrives after 480 minutes (8 hours)
+        TERMINATE   1               ; End the simulation after 480 minutes
+
+; Control (Start the simulation)
+        START       1               ; Start the simulation run
+        END
+_________________________________________________________________________________________
+
+; Quality Control System Simulation
+; Multiple quality control workers (servers) and one queue
+; Time unit: 1 minute
+
+; Customer (Product for inspection)
+        GENERATE    20             ; Products arrive every 20 minutes (mean)
+        QUEUE       QCQueue        ; Enter the quality control queue
+
+; The number of workers (servers) handling quality control is 3
+; The system will seize any available worker from the pool
+        SEIZE       Worker1        ; Capture the first worker (server)
+        SEIZE       Worker2        ; Capture the second worker (server)
+        SEIZE       Worker3        ; Capture the third worker (server)
+
+        DEPART      QCQueue        ; Leave the queue after being inspected
+        ADVANCE     12             ; Quality check time of 12 minutes (mean)
+        RELEASE     Worker1        ; Free the first worker (server)
+        RELEASE     Worker2        ; Free the second worker (server)
+        RELEASE     Worker3        ; Free the third worker (server)
+        TERMINATE                   ; Product leaves after inspection
+
+; Restocking Process (Restock products to inspect)
+        GENERATE    300            ; Restocking arrives every 300 minutes (5 hours)
+        SEIZE       Inventory      ; Seize inventory space
+        ADVANCE     0              ; Restocking time is immediate (no delay)
+        RELEASE     Inventory      ; Release restocked inventory
+        TERMINATE                   ; End restocking transaction
+
+; Timer (Stop simulation after 480 minutes)
+        GENERATE    480            ; Timer arrives after 480 minutes (8 hours)
+        TERMINATE   1              ; End the simulation after 480 minutes
+
+; Control (Start the simulation)
+        START       1              ; Start the simulation run
+        END
+_________________________________________________________________________________________
+
+; Washing Machine System Simulation
+; Multiple washing machines (servers) and one queue per stage
+; Time unit: 1 minute
+
+; Customer (Clothes arriving for washing)
+        GENERATE    15             ; Clothes arrive every 15 minutes (mean)
+        QUEUE       WashQueue      ; Enter the washing queue
+
+; The number of washing machines (servers) available is 3
+        SEIZE       Washer1        ; Capture the first washer
+        SEIZE       Washer2        ; Capture the second washer
+        SEIZE       Washer3        ; Capture the third washer
+
+        DEPART      WashQueue      ; Leave the washing queue
+        ADVANCE     15             ; Washing time of 15 minutes (mean)
+        RELEASE     Washer1        ; Free the first washer
+        RELEASE     Washer2        ; Free the second washer
+        RELEASE     Washer3        ; Free the third washer
+
+; Rinsing stage
+        QUEUE       RinseQueue     ; Enter the rinsing queue
+        SEIZE       Washer1        ; Reuse the first washer
+        SEIZE       Washer2        ; Reuse the second washer
+        SEIZE       Washer3        ; Reuse the third washer
+
+        DEPART      RinseQueue     ; Leave the rinsing queue
+        ADVANCE     10             ; Rinsing time of 10 minutes
+        RELEASE     Washer1        ; Release washer after rinsing
+        RELEASE     Washer2
+        RELEASE     Washer3
+
+; Spinning stage
+        QUEUE       SpinQueue      ; Enter the spinning queue
+        SEIZE       Washer1        ; Seize washer again for spinning
+        SEIZE       Washer2
+        SEIZE       Washer3
+
+        DEPART      SpinQueue      ; Leave the spinning queue
+        ADVANCE     5              ; Spinning time of 5 minutes
+        RELEASE     Washer1
+        RELEASE     Washer2
+        RELEASE     Washer3
+
+        TERMINATE                  ; Clothes exit the system after processing
+
+; Timer (Stop simulation after 480 minutes)
+        GENERATE    480            ; Stop simulation trigger after 8 hours
+        TERMINATE   1              ; End simulation run
+
+; Control (Start the simulation)
+        START       1              ; Start the simulation run
+        END
+
+_________________________________________________________________________________________
+
+; Airline System Simulation
+; Time unit: 1 minute
+; ------------ Passenger Arrival ------------
+        GENERATE    5            ; A new passenger arrives every 5 minutes (mean)
+        QUEUE       CheckInQ     ; Queue for check-in
+        SEIZE       CheckIn      ; Seize a check-in counter
+        DEPART      CheckInQ     ; Leave the check-in queue
+        ADVANCE     4            ; Takes 4 minutes to check in
+        RELEASE     CheckIn      ; Free the counter
+; ------------ Security Check ------------
+        QUEUE       SecurityQ    ; Queue for security
+        SEIZE       Security     ; Seize a security checkpoint
+        DEPART      SecurityQ    ; Leave the security queue
+        ADVANCE     3            ; Takes 3 minutes for security
+        RELEASE     Security     ; Release the checkpoint
+; ------------ Boarding Gate ------------
+        ADVANCE     2            ; Takes 2 minutes to reach the gate
+        TERMINATE                ; Passenger completes the process
+; ------------ Facilities ------------
+CheckIn      STORAGE     10000       ; Check-in counter
+Security     STORAGE     10001       ; Security checkpoint
+
+; ------------ Simulation Timer ------------
+        GENERATE    480          ; End simulation after 8 hours
+        TERMINATE   1
+
+; ------------ Start Simulation ------------
+        START       1
+        END
+
+_________________________________________________________________________________________
+
+; Supermarket Billing System Simulation
+; Time unit: 1 minute
+
+; ------------ Customer Arrival ------------
+        GENERATE    6            ; A customer arrives every 6 minutes
+        QUEUE       BillingQ     ; Join billing queue
+        SEIZE       Billing      ; Seize a billing counter
+        DEPART      BillingQ     ; Leave the billing queue
+        ADVANCE     5            ; Takes 5 minutes to bill items
+        RELEASE       Billing      ; Release the billing counter
+
+; ------------ Exit the System ------------
+        ADVANCE     2            ; Takes 2 minutes to leave the store
+        TERMINATE                ; Customer exits
+
+; ------------ Facilities ------------
+Billing     STORAGE   2          ; Billing counter
+
+; ------------ Simulation Timer ------------
+        GENERATE    480          ; Control transaction to end after 8 hours
+        TERMINATE   1
+
+; ------------ Start Simulation ------------
+        START       1
+        END
+
+_________________________________________________________________________________________
+; Airline System Simulation
+; Time unit: 1 minute
+; ------------ Passenger Arrival ------------
+        GENERATE    5            ; A new passenger arrives every 5 minutes (mean)
+        QUEUE       CheckInQ     ; Queue for check-in
+        SEIZE       CheckIn      ; Seize a check-in counter
+        DEPART      CheckInQ     ; Leave the check-in queue
+        ADVANCE     4            ; Takes 4 minutes to check in
+        RELEASE     CheckIn      ; Free the counter
+; ------------ Security Check ------------
+        QUEUE       SecurityQ    ; Queue for security
+        SEIZE       Security     ; Seize a security checkpoint
+        DEPART      SecurityQ    ; Leave the security queue
+        ADVANCE     3            ; Takes 3 minutes for security
+        RELEASE     Security     ; Release the checkpoint
+; ------------ Boarding Gate ------------
+        ADVANCE     2            ; Takes 2 minutes to reach the gate
+        TERMINATE                ; Passenger completes the process
+; ------------ Facilities ------------
+CheckIn      STORAGE     10000       ; Check-in counter
+Security     STORAGE     10001       ; Security checkpoint
+
+; ------------ Simulation Timer ------------
+        GENERATE    480          ; End simulation after 8 hours
+        TERMINATE   1
+
+; ------------ Start Simulation ------------
+        START       1
+        END
+
+_________________________________________________________________________________________
