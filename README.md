@@ -1,5 +1,6 @@
-# Exam
-exam 1 
+# Exam 1 – Barber Shop Simulation
+
+; Exam 1
 ; Barber shop
 ; A one-line, one-server queuing system
 ; Adapted from Case Study 2A of Thomas J. Schriber's "A GPSS Primer" (page II-36)
