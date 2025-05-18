@@ -1,25 +1,22 @@
-# Exam 1 – Barber Shop Simulation
+DEMONSTRATE LED Blinking in iot Device
+AIM
+To understand and implement basic digital output using an Arduino by blinking an LED.
 
-; Exam 1
-; Barber shop
-; A one-line, one-server queuing system
-; Adapted from Case Study 2A of Thomas J. Schriber's "A GPSS Primer" (page II-36)
+APPARATUS
+Arduino UNO board
 
-; Time unit: 1 minute
+LED
 
-; Customer
-        GENERATE    18,6        ; Customers arrive
-        QUEUE       Line        ; Enter the line
-        SEIZE       Barber      ; Capture the barber
-        DEPART      Line        ; Leave the line
-        ADVANCE     16,4        ; Use the barber
-        RELEASE     Barber      ; Free the barber
-        TERMINATE               ; Leave the shop
+Resistors (220Ω)
 
-; Timer
-        GENERATE    480         ; Timer arrives at time 480 (8 hours)
-        TERMINATE   1           ; Shut off the run
+Breadboard
 
-; Control
-        START       1           ; Start the run
-        END                     ; Exit the program
+Jumper wires
+
+USB Cable
+
+OBJECTIVE
+To write and upload a simple program to the Arduino that makes an LED blink at regular intervals, demonstrating the control of digital outputs.
+
+THEORY
+An LED is a basic electronic component that emits light when current flows through it. In IoT, controlling LEDs is often the first step in learning how to handle digital output. The digitalWrite() function in Arduino code sets the voltage of a pin to HIGH or LOW, allowing us to blink an LED by turning it on and off.
