@@ -22,160 +22,153 @@
         END                     ; Exit the program
 
 _________________________________________________________________________________________
-; Multi-Server, Single Queueing System
-; Multiple barbers (servers) and one queue
+; Barber shop with 3 barbers (multi-server system)
 ; Time unit: 1 minute
-; Customer
-        GENERATE    18,6        ; Customers arrive every 18 +/- 6 minutes
-        QUEUE       Line        ; Enter the line (queue)
-        
-; The number of barbers (servers) is 3
-; The system will seize any available barber from the pool
-        SEIZE       Barber1     ; Capture the first barber (server)
-        SEIZE       Barber2     ; Capture the second barber (server)
-        SEIZE       Barber3     ; Capture the third barber (server)
-        
-        DEPART      Line        ; Leave the line after being served
-        ADVANCE     16,4        ; Use the barber (service time) 16 +/- 4 minutes
-        RELEASE     Barber1     ; Free the first barber (server)
-        RELEASE     Barber2     ; Free the second barber (server)
-        RELEASE     Barber3     ; Free the third barber (server)
-        TERMINATE               ; Leave the shop after service
+
+; Define the number of barbers (storage block with 3 units)
+Barbers     STORAGE     3
+
+; Customer arrival process
+        GENERATE    18,6        ; Customers arrive every 18 ± 6 minutes
+        QUEUE       Line        ; Enter the line
+        ENTER       Barbers,1   ; Seize one available barber
+        DEPART      Line        ; Leave the line after getting a barber
+        ADVANCE     16,4        ; Service time: 16 ± 4 minutes
+        LEAVE       Barbers,1   ; Release the barber
+        TERMINATE               ; Customer leaves
+
+; Timer to end the simulation after 480 minutes
+        GENERATE    480         ; Trigger after 480 minutes (8 hours)
+        TERMINATE   1           ; End simulation
+
+; Control cards
+        START       1           ; Start simulation
+        END                     ; End of program
+_________________________________________________________________________________________
+; Inventory System
+; A system where customer demand reduces stock and periodic restocking occurs
+; Time unit: 1 day
+
+; Customer Demand
+        GENERATE    1,1             ; Customer demand arrives every 1–2 days
+        QUEUE       DemandLine      ; Wait to access inventory
+        ENTER       Stock,1         ; Use 1 unit of stock
+        DEPART      DemandLine      ; Leave demand queue
+        ADVANCE     0               ; Immediate consumption
+        LEAVE       Stock,1         ; Reduce inventory
+        TERMINATE                   ; Demand processed
+
+; Restock Inventory
+        GENERATE    5               ; Replenish every 5 days
+        ENTER       Stock,10        ; Add 10 units to inventory
+        TERMINATE                   ; Replenishment complete
 
 ; Timer
-        GENERATE    480         ; Timer arrives after 480 minutes (8 hours)
-        TERMINATE   1           ; Shut off the run after 480 minutes
+        GENERATE    30              ; Timer for 30-day simulation
+        TERMINATE   1               ; End the run
+
+; Facility
+Stock   STORAGE     50              ; Initial inventory of 50 units
 
 ; Control
-        START       1           ; Start the run
-        END
+        START       1
+        END
 _________________________________________________________________________________________
-; Multi-Server Inventory Management System
-; Multiple workers (servers) and one queue
+; Dump Truck Simulation
+; One truck, two facilities (LoadSite and DumpSite)
 ; Time unit: 1 minute
 
-; Customer (Inventory demand)
-        GENERATE    18,6            ; Customers arrive every 18 +/- 6 minutes
-        QUEUE       Line            ; Enter the line (queue)
+; Truck Process
+        GENERATE    20,5        ; Truck starts every 20±5 minutes
+        SEIZE       LoadSite    ; Request loading site
+        ADVANCE     10,2        ; Loading takes 10±2 minutes
+        RELEASE     LoadSite    ; Done loading
 
-; The number of workers (servers) handling the inventory is 3
-; The system will seize any available worker from the pool
-        SEIZE       Worker1         ; Capture the first worker (server)
-        SEIZE       Worker2         ; Capture the second worker (server)
-        SEIZE       Worker3         ; Capture the third worker (server)
+        ADVANCE     15          ; Travel to dump site
 
-        DEPART      Line            ; Leave the line after being served
-        ADVANCE     16,4            ; Use the worker (service time) 16 +/- 4 minutes
-        RELEASE     Worker1         ; Free the first worker (server)
-        RELEASE     Worker2         ; Free the second worker (server)
-        RELEASE     Worker3         ; Free the third worker (server)
-        TERMINATE                   ; Customer leaves after service
+        SEIZE       DumpSite    ; Request dump site
+        ADVANCE     5,1         ; Dumping takes 5±1 minutes
+        RELEASE     DumpSite    ; Done dumping
 
-; Restocking Process (Supply)
-        GENERATE    240             ; Restocking arrives every 240 minutes (4 hours)
-        SEIZE       Inventory       ; Seize inventory space
-        ADVANCE     0,0             ; Restocking time is immediate (no delay)
-        RELEASE     Inventory       ; Release restocked inventory
-        TERMINATE                   ; End restocking transaction
+        ADVANCE     15          ; Return to load site
 
-; Timer (Stop simulation after 480 minutes)
-        GENERATE    480             ; Timer arrives after 480 minutes (8 hours)
-        TERMINATE   1               ; End the simulation after 480 minutes
+        TERMINATE               ; End one full truck cycle
 
-; Control (Start the simulation)
-        START       1               ; Start the simulation run
-        END
+; Timer
+        GENERATE    480         ; Simulation runs for 480 minutes (8 hours)
+        TERMINATE   1           ; End the simulation
+
+; Control
+        START       1           ; Start the simulation
+        END                     ; End of GPSS program
 _________________________________________________________________________________________
 
-; Quality Control System Simulation
-; Multiple quality control workers (servers) and one queue
+; Quality Control (QC) Station
+; A one-line, two-server queuing system (2 inspectors)
 ; Time unit: 1 minute
 
-; Customer (Product for inspection)
-        GENERATE    20             ; Products arrive every 20 minutes (mean)
-        QUEUE       QCQueue        ; Enter the quality control queue
+; Product
+        GENERATE    10,4            ; Products arrive every ~10 mins
+        QUEUE       QCLine          ; Enter QC line
+        SEIZE       Inspector       ; Capture an inspector
+        DEPART      QCLine          ; Leave QC line
+        ADVANCE     5,2             ; Inspection time (~5 mins)
+        RELEASE     Inspector       ; Free the inspector
+        TRANSFER    0.8,Accepted,Rejected  ; 80% pass, 20% fail
 
-; The number of workers (servers) handling quality control is 3
-; The system will seize any available worker from the pool
-        SEIZE       Worker1        ; Capture the first worker (server)
-        SEIZE       Worker2        ; Capture the second worker (server)
-        SEIZE       Worker3        ; Capture the third worker (server)
+Accepted TERMINATE                   ; Accepted product exits system
+Rejected TERMINATE                   ; Rejected product exits system
 
-        DEPART      QCQueue        ; Leave the queue after being inspected
-        ADVANCE     12             ; Quality check time of 12 minutes (mean)
-        RELEASE     Worker1        ; Free the first worker (server)
-        RELEASE     Worker2        ; Free the second worker (server)
-        RELEASE     Worker3        ; Free the third worker (server)
-        TERMINATE                   ; Product leaves after inspection
+; Timer
+        GENERATE    480             ; End simulation after 480 mins
+        TERMINATE   1               ; Shut off the run
 
-; Restocking Process (Restock products to inspect)
-        GENERATE    300            ; Restocking arrives every 300 minutes (5 hours)
-        SEIZE       Inventory      ; Seize inventory space
-        ADVANCE     0              ; Restocking time is immediate (no delay)
-        RELEASE     Inventory      ; Release restocked inventory
-        TERMINATE                   ; End restocking transaction
+; Facilities
+Inspector STORAGE    2              ; Two inspectors available
 
-; Timer (Stop simulation after 480 minutes)
-        GENERATE    480            ; Timer arrives after 480 minutes (8 hours)
-        TERMINATE   1              ; End the simulation after 480 minutes
-
-; Control (Start the simulation)
-        START       1              ; Start the simulation run
-        END
+; Control
+        START       1               ; Start the run
+        END                         ; Exit the program
 _________________________________________________________________________________________
 
 ; Washing Machine System Simulation
-; Multiple washing machines (servers) and one queue per stage
+; 3 washing machines processing washing, rinsing, spinning
 ; Time unit: 1 minute
 
-; Customer (Clothes arriving for washing)
-        GENERATE    15             ; Clothes arrive every 15 minutes (mean)
-        QUEUE       WashQueue      ; Enter the washing queue
+; Customer (clothes) arrival
+        GENERATE    15,3            ; Clothes arrive every ~15 minutes
+        QUEUE       WashingQueue    ; Queue for washing machines
+        ENTER       WashMachine     ; Occupy a washing machine
+        DEPART      WashingQueue    ; Leave washing queue
+        ADVANCE     15              ; Washing time (15 minutes)
+        LEAVE       WashMachine     ; Free washing machine
 
-; The number of washing machines (servers) available is 3
-        SEIZE       Washer1        ; Capture the first washer
-        SEIZE       Washer2        ; Capture the second washer
-        SEIZE       Washer3        ; Capture the third washer
+        ; Rinsing step (same machines assumed, or separate?)
+        QUEUE       RinsingQueue   ; Queue for rinsing (use same machines)
+        ENTER       WashMachine     ; Re-occupy washing machine
+        DEPART      RinsingQueue
+        ADVANCE     10              ; Rinsing time (10 minutes)
+        LEAVE       WashMachine
 
-        DEPART      WashQueue      ; Leave the washing queue
-        ADVANCE     15             ; Washing time of 15 minutes (mean)
-        RELEASE     Washer1        ; Free the first washer
-        RELEASE     Washer2        ; Free the second washer
-        RELEASE     Washer3        ; Free the third washer
+        ; Spinning step
+        QUEUE       SpinningQueue  ; Queue for spinning (use same machines)
+        ENTER       WashMachine
+        DEPART      SpinningQueue
+        ADVANCE     5               ; Spinning time (5 minutes)
+        LEAVE       WashMachine
 
-; Rinsing stage
-        QUEUE       RinseQueue     ; Enter the rinsing queue
-        SEIZE       Washer1        ; Reuse the first washer
-        SEIZE       Washer2        ; Reuse the second washer
-        SEIZE       Washer3        ; Reuse the third washer
+        TERMINATE                   ; Clothes processed and exit system
 
-        DEPART      RinseQueue     ; Leave the rinsing queue
-        ADVANCE     10             ; Rinsing time of 10 minutes
-        RELEASE     Washer1        ; Release washer after rinsing
-        RELEASE     Washer2
-        RELEASE     Washer3
+; Timer to end simulation after 8 hours (480 minutes)
+        GENERATE    480
+        TERMINATE   1               ; End simulation run
 
-; Spinning stage
-        QUEUE       SpinQueue      ; Enter the spinning queue
-        SEIZE       Washer1        ; Seize washer again for spinning
-        SEIZE       Washer2
-        SEIZE       Washer3
+; Storage representing 3 washing machines (shared for all operations)
+WashMachine    STORAGE 3
 
-        DEPART      SpinQueue      ; Leave the spinning queue
-        ADVANCE     5              ; Spinning time of 5 minutes
-        RELEASE     Washer1
-        RELEASE     Washer2
-        RELEASE     Washer3
-
-        TERMINATE                  ; Clothes exit the system after processing
-
-; Timer (Stop simulation after 480 minutes)
-        GENERATE    480            ; Stop simulation trigger after 8 hours
-        TERMINATE   1              ; End simulation run
-
-; Control (Start the simulation)
-        START       1              ; Start the simulation run
-        END
+; Control
+        START       1
+        END
 
 _________________________________________________________________________________________
 
@@ -267,5 +260,3 @@ Security     STORAGE     10001       ; Security checkpoint
 ; ------------ Start Simulation ------------
         START       1
         END
-
-_________________________________________________________________________________________
