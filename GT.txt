@@ -115,25 +115,24 @@ if __name__ == "__main__":
 
 ____________________________________________________________________________
 # Exp 6 	Design Bayesian Game concept in Game theory using python
+import pygambit
 
-import itertools
-import numpy as np
+# Create a Bayesian game with two players, each with two types
+game = pygambit.Game.new_table([2, 2, 2, 2])  # 2 players, each with 2 types, each type has 2 strategies
 
-# Define players, types, strategies, and beliefs
-players = ['Player 1', 'Player 2']
-types = {
-    'Player 1': [0, 1],  # Two types for Player 1
-    'Player 2': [0, 1],  # Two types for Player 2
-}
-strategies = [0, 1]  # Two strategies per type
+# Label players
+game.players[0].label = "Player 1"
+game.players[1].label = "Player 2"
+
+# Assign type probabilities (beliefs)
 beliefs = {
-    'Player 1': [0.5, 0.5],  # Player 1's belief about Player 2's types
-    'Player 2': [0.5, 0.5],  # Player 2's belief about Player 1's types
+    "Player 1": [0.5, 0.5],  # Player 1 believes Player 2's types are equally likely
+    "Player 2": [0.5, 0.5]   # Player 2 believes Player 1's types are equally likely
 }
 
-# Payoff function: (type1, type2, strat1, strat2) -> (payoff1, payoff2)
+# Assign payoffs (indexed by (type1, type2, strategy1, strategy2))
 payoffs = {
-    (0, 0, 0, 0): (3, 2),
+    (0, 0, 0, 0): (3, 2),  # (Player 1 Type 0, Player 2 Type 0, Strategy 0, Strategy 0)
     (0, 0, 0, 1): (1, 4),
     (0, 0, 1, 0): (5, 1),
     (0, 0, 1, 1): (2, 3),
@@ -154,77 +153,15 @@ payoffs = {
     (1, 1, 1, 1): (2, 1),
 }
 
-def expected_payoff(player, player_type, player_strategy, opponent_strategy_func):
-    """
-    Calculate expected payoff for a given player, type, and chosen strategy,
-    assuming the opponent follows opponent_strategy_func(type) -> strategy.
-    """
-    opp = 'Player 2' if player == 'Player 1' else 'Player 1'
-    opp_types = types[opp]
-    opp_beliefs = beliefs[player]  # player's belief about opponent's types
-    payoff_sum = 0.0
-    for i, opp_type in enumerate(opp_types):
-        opp_strategy = opponent_strategy_func(opp_type)
-        p = opp_beliefs[i]  # probability opponent is this type
-        # Get payoffs from the payoff table
-        if player == 'Player 1':
-            payoff = payoffs[(player_type, opp_type, player_strategy, opp_strategy)][0]
-        else:
-            payoff = payoffs[(opp_type, player_type, opp_strategy, player_strategy)][1]
-        payoff_sum += p * payoff
-    return payoff_sum
+# Assign payoffs to Gambit game
+for (t1, t2, s1, s2), (p1, p2) in payoffs.items():
+    game[t1, t2, s1, s2][game.players[0]] = p1  # Payoff for Player 1
+    game[t1, t2, s1, s2][game.players[1]] = p2  # Payoff for Player 2
 
-def is_best_response(player, player_type, player_strategy, opponent_strategy_func):
-    """
-    Check if player_strategy is a best response for the player's type
-    given opponent's strategy function.
-    """
-    other_strategies = strategies
-    current_payoff = expected_payoff(player, player_type, player_strategy, opponent_strategy_func)
-    for alt_strategy in other_strategies:
-        alt_payoff = expected_payoff(player, player_type, alt_strategy, opponent_strategy_func)
-        if alt_payoff > current_payoff:
-            return False
-    return True
-
-def check_bayesian_nash_eq(profile):
-    """
-    profile is a dict mapping (player, type) -> strategy
-    Check if profile is a pure-strategy Bayesian Nash Equilibrium.
-    """
-    # Opponent strategy functions for each player
-    def opp_strategy_func(player, opp_type):
-        return profile[(player, opp_type)]
-
-    # For each player and type, check best response
-    for player in players:
-        for p_type in types[player]:
-            player_strategy = profile[(player, p_type)]
-            # Opponent's strategy function
-            opp = 'Player 2' if player == 'Player 1' else 'Player 1'
-            def opponent_strat(t):
-                return profile[(opp, t)]
-            if not is_best_response(player, p_type, player_strategy, opponent_strat):
-                return False
-    return True
-
-# Generate all possible pure strategy profiles for all player-types
-all_profiles = list(itertools.product(strategies, repeat=len(players)*len(types['Player 1'])))  # 4 strategies total
-# We map index: (P1 type0, P1 type1, P2 type0, P2 type1)
-equilibria = []
-
-for prof in all_profiles:
-    profile = {
-        ('Player 1', 0): prof[0],
-        ('Player 1', 1): prof[1],
-        ('Player 2', 0): prof[2],
-        ('Player 2', 1): prof[3],
-    }
-    if check_bayesian_nash_eq(profile):
-        equilibria.append(profile)
-
-print("Pure Strategy Bayesian Nash Equilibria found:")
-for eq in equilibria:
+# Compute Bayesian Nash Equilibria
+solver = pygambit.nash.enumpure_solve(game)
+print("Bayesian Nash Equilibria:")
+for eq in solver.equilibria:
     print(eq)
 
 ____________________________________________________________________________
