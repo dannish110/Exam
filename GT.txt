@@ -70,6 +70,29 @@ matching_pennies = nash.Game(A)
 equilibria = matching_pennies.support_enumeration()
 for eq in equilibria:
     print(eq)
+#Exp 4 	Write a program using python library(gambit) to find nash Equilibrium.
+
+import pygambit as gambit
+
+# Create a 2-player game with 2 strategies each
+game = gambit.Game.from_arrays(
+    [[3, 0], [5, 1]],  # Player 1's payoffs
+    [[3, 5], [0, 1]]   # Player 2's payoffs
+)
+
+# Solve for Nash Equilibria using mixed strategy enumeration
+result = gambit.nash.enummixed_solve(game)
+
+# Print the results
+print("Nash Equilibria:")
+# Check if result is iterable; if not, treat as a single equilibrium or access equilibria attribute
+try:
+    equilibria = result.equilibria if hasattr(result, 'equilibria') else [result]
+    for eq in equilibria:
+        print(eq)
+except AttributeError:
+  # Fallback: treat result as a single equilibrium
+  print(result)
 ____________________________________________________________________________
 
 
